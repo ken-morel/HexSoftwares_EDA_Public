@@ -1,6 +1,7 @@
 using CSV
 using DataFrames
-using Plots
+using Makie
+using GLMakie
 
 const DATA_PATH = "./AB_NYC_2019.csv"
 
@@ -62,22 +63,31 @@ end
 
 function showplots(df::DataFrame)
     @info "Ploting prices "
-    plotprices(df)
+    plotprices(df) |> display
     return
 end
+
 function plotprices(df::DataFrame)
-    # transform each (price, count) to (count, price)
-    prices = countmap(df.price) .|> reverse
-    plots = scatter(
-        prices;
-        title = "House price per number of rents",
-        xlabel = "Number of rents",
-        ylabel = "Rent fee",
+    f = Figure()
+    ax = Axis(f[1, 1])
+    pricecounts = countmap(df.price)
+    prices, counts = zip(pricecounts...)
+    maxprice = max(prices)
+    maxcounts = max(counts)
+    Label(f[1, 1], "House price per number of rents", fontsize = 30)
+
+    slide = Slider(f[1, 2], range = 1:0.2:100, horizontal = false)
+
+
+    plots = scatter!(
+        ax,
+        pricescounts .|> reverse;
         alpha = 0.2,
-        markercolor = :blue,
+        color = :blue,
         markersize = 2,
         label = "Room",
     )
-    hline!([averageroomprice(df)]; label = "Average room price", linewidth = 2, linecolor = :red)
-    return
+    hlines!(ax, [averageroomprice(df)]; label = "Average room price", linewidth = 2, color = :red)
+
+    return f
 end
